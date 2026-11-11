@@ -38,7 +38,11 @@ from pathlib import Path
 # (id, 级别, 正则, 说明)
 # 级别：BLOCK = 命中即不许发布；WARN = 出版前逐条看，允许但要有理由。
 STRUCTURAL_RULES = [
-    ("win_abs_path", "BLOCK", r"\b[A-Za-z]:[\\/](?![\\/])",
+    # 负向前视/后顾两处都不能省：
+    #  - 后顾 (?<![\w.\-]) 排除 URL：scheme 后面那串斜杠不算盘符分隔；
+    #  - 前瞻 (?![\\/]) 排除双分隔写法。
+    # 连这条注释本身也不能写出真实形态——写了就会被自己扫到（已实际发生 1 次）。
+    ("win_abs_path", "BLOCK", r"(?<![\w.\-])[A-Za-z]:[\\/](?![\\/])",
      "盘符绝对路径（家目录 / 内网 / 项目目录）"),
     ("unc_path", "BLOCK", r"\\\\[A-Za-z0-9_.\-]+\\",
      "UNC 网络路径"),
@@ -73,8 +77,8 @@ STRUCTURAL_RULES = [
 ]
 
 TEXT_SUFFIXES = {
-    ".md", ".txt", ".json", ".yml", ".yaml", ".py", ".ps1", ".sh", ".bat",
-    ".csv", ".html", ".css", ".js", ".ts", ".toml", ".ini", ".cfg", ".env",
+    ".md", ".txt", ".json", ".jsonl", ".yml", ".yaml", ".py", ".ps1", ".sh", ".bat",
+    ".csv", ".html", ".css", ".js", ".ts", ".toml", ".ini", ".cfg", ".env", ".template",
 }
 TEXT_NAMES = {"LICENSE", "LICENSE-DOCS", "VERSION", ".gitignore", ".gitattributes", "Makefile"}
 EXCLUDE_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", "dist", "build", ".mypy_cache"}
@@ -155,6 +159,7 @@ def scan(args) -> int:
     allowed: list[dict] = []       # 被 sanitize:allow 放行的命中（仍计数，供审计）
     files_scanned = 0
     files_skipped = 0
+    text_bytes = 0
     crlf_files: list[str] = []
     bom_files: list[str] = []
     large: list[tuple[str, int]] = []
@@ -183,6 +188,7 @@ def scan(args) -> int:
 
         text = raw.decode("utf-8-sig", errors="replace")
         files_scanned += 1
+        text_bytes += len(raw)
         for lineno, line in enumerate(text.split("\n"), start=1):
             line_allowed = ALLOW_TOKEN in line
             for rid, sev, rx, note in compiled:
@@ -205,13 +211,26 @@ def scan(args) -> int:
                     else:
                         hits.append(hit)
 
+    # ------------------------------------------------------------ 假门拦截
+    # 扫到 0 个文件却报 PASS，是"假门"：导出失败、路径写错、权限没读到，
+    # 都会表现为"0 命中"。所以覆盖为 0 一律判 FAIL，不许静默通过。
+    if files_scanned == 0:
+        print("脱敏扫描报告（sanitize_scan.py）")
+        print(f"root            : {root}")
+        print(f"扫描覆盖         : 0 个文件 / 0 字节")
+        print(f"非文本跳过       : {files_skipped} 个")
+        print()
+        print("[FAIL] 扫描覆盖为 0：一个文本文件都没扫到。")
+        print("       空目录不是通过，是假门——先确认导出/路径/权限是否正确。")
+        return 1
+
     # ------------------------------------------------------------ 汇总
     blocks = [h for h in hits if h["sev"] == "BLOCK"]
     warns = [h for h in hits if h["sev"] == "WARN"]
 
     print("脱敏扫描报告（sanitize_scan.py）")
     print(f"root            : {root}")
-    print(f"文本文件扫描     : {files_scanned} 个")
+    print(f"扫描覆盖         : {files_scanned} 个文本文件 / {text_bytes:,} 字节")
     print(f"非文本跳过       : {files_skipped} 个")
     print(f"结构规则         : {len(STRUCTURAL_RULES)} 条")
     print(f"实体名单         : {len(terms)} 条来自 {denylist_path.name}"
@@ -256,7 +275,7 @@ def scan(args) -> int:
           + ("PASS，可以发布" if ok else "FAIL，不许发布（先清 BLOCK，WARN 逐条给理由）"))
 
     if args.report:
-        report = render_report(root, files_scanned, terms, allowed, blocks, warns, crlf_files, bom_files, ok)
+        report = render_report(root, files_scanned, text_bytes, terms, allowed, blocks, warns, crlf_files, bom_files, ok)
         Path(args.report).write_text(report, encoding="utf-8")
         print(f"报告已写入：{args.report}")
 
@@ -264,16 +283,17 @@ def scan(args) -> int:
         payload = {"root": str(root), "pass": ok,
                    "blocks": len(blocks), "warns": len(warns),
                    "allowed": len(allowed), "files": files_scanned,
+                   "bytes": text_bytes,
                    "hits": [{**h, "match": mask(h["match"])} for h in hits]}
         print(json.dumps(payload, ensure_ascii=False, indent=2))
 
     return 0 if ok else 1
 
 
-def render_report(root, files, terms, allowed, blocks, warns, crlf, bom, ok) -> str:
+def render_report(root, files, text_bytes, terms, allowed, blocks, warns, crlf, bom, ok) -> str:
     lines = ["# 脱敏扫描报告", "",
              f"- 根目录：`{root}`",
-             f"- 文本文件：{files} 个",
+             f"- 扫描覆盖：{files} 个文本文件 / {text_bytes:,} 字节（覆盖为 0 一律判 FAIL）",
              f"- 实体名单：{len(terms)} 条" + ("" if terms else "（未加载，仅结构层）"),
              f"- allow 放行：{len(allowed)} 处",
              f"- 结论：**{'PASS' if ok else 'FAIL'}**（BLOCK {len(blocks)} / WARN {len(warns)}）",

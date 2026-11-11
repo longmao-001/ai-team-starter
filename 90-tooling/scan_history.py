@@ -138,6 +138,7 @@ def main() -> int:
     hits: list[dict] = []
     waived: list[dict] = []
     blobs_scanned = 0
+    blob_bytes = 0
     waiver_path = Path(args.waivers) if args.waivers else (root / DEFAULT_WAIVERS)
     waivers = load_waivers(waiver_path)
     for sha, short, subj in revs:
@@ -161,6 +162,7 @@ def main() -> int:
             except Exception:
                 continue
             blobs_scanned += 1
+            blob_bytes += len(raw)
             text = raw.decode("utf-8-sig", errors="replace")
             for lineno, content in enumerate(text.split("\n"), start=1):
                 line_allowed = ALLOW_TOKEN in content
@@ -190,6 +192,11 @@ def main() -> int:
     blocks = [h for h in hits if h["sev"] == "BLOCK"]
     warns = [h for h in hits if h["sev"] == "WARN"]
 
+    # 假门拦截：一个 blob 都没读到还报"干净"，等于没扫
+    if blobs_scanned == 0:
+        print("[FAIL] 扫描覆盖为 0：一个 blob 都没读到。空结果不是干净，是假门。")
+        return 1
+
     # 按 文件+规则 聚合：同一处在多个提交里重复出现只报一次，但带上提交数
     def group(items: list[dict]):
         agg: dict[tuple[str, str], dict] = {}
@@ -211,7 +218,7 @@ def main() -> int:
                   f"  出现在 {len(g['commits'])} 个提交：{', '.join(g['commits'][:4])}")
         print()
 
-    print(f"扫描 blob 数     : {blobs_scanned}")
+    print(f"扫描覆盖         : {len(revs)} 个提交 / {blobs_scanned} 个 blob / {blob_bytes:,} 字节（覆盖为 0 一律判 FAIL）")
     print(f"OVERRIDE（已定性）: {len(waived)} 处（来自 {waiver_path.name}，不计入通过但全部列出）")
     print()
     dump(f"[BLOCK] {len(blocks)} 处（按文件+规则聚合）", blocks)

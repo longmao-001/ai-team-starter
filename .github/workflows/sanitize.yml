@@ -1,0 +1,35 @@
+name: 脱敏扫描（结构层）
+
+# CI 只跑结构层：路径 / IP / 邮箱 / 密钥 / 证件号 / 体积 / 编码。
+# 实体名单（真实人名、机构名、项目代号）只在本地跑，因为名单本身不能进仓库——
+# 详见 90-tooling/README.md「为什么扫描器分两层」。
+#
+# 本地发布门（带名单）：
+#   python 90-tooling/sanitize_scan.py --root . --require-denylist --report scan-report.md
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 脱敏扫描（结构层）
+        run: python 90-tooling/sanitize_scan.py --root . --report scan-report.md
+
+      - name: 上传扫描报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sanitize-report
+          path: scan-report.md
+          if-no-files-found: ignore

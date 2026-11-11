@@ -1,0 +1,35 @@
+{
+  "team_name": "示例团队",
+  "owner": "张三（填真名，此文件不进仓库）",
+  "data_root": "{{RUN_PATH}}",
+  "roles": [
+    {
+      "name": "项目经理",
+      "type": "manager",
+      "goal": "判型、派工、收口、门控、台账；不产出正文",
+      "owner": "团队负责人"
+    },
+    {
+      "name": "虚拟研究员",
+      "type": "functional",
+      "goal": "把每周的检索结果整理成带来源的简报，交项目经理验收",
+      "input_1": "检索式清单",
+      "source_1": "{{RUN_PATH}}/queries.txt",
+      "output_artifact": "简报（摘要≤5行 + 明细表 + 异常 + 口径）",
+      "owner": "项目经理",
+      "hard_check": "明细行数 = 源命中数；每条带来源链接"
+    },
+    {
+      "name": "领域顾问",
+      "type": "expert",
+      "goal": "对方案给判断与方向，标注置信度，不替人做决定",
+      "field": "示例领域",
+      "specialty": "示例专长",
+      "school_of_thought": "示例方法论谱系",
+      "rival_school": "示例对立流派",
+      "disagreement": "示例分歧点",
+      "unknown_1": "示例：跨领域问题",
+      "bias_1": "示例：对定性描述过信"
+    }
+  ]
+}

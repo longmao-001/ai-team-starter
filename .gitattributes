@@ -1,0 +1,19 @@
+# 全仓库统一 LF + UTF-8，避免 Windows/macOS 混用导致 grep 与生成器失配
+* text=auto eol=lf
+
+*.md   text eol=lf
+*.json text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.py   text eol=lf
+*.ps1  text eol=lf
+*.txt  text eol=lf
+.gitattributes text eol=lf
+.gitignore     text eol=lf
+
+*.png  binary
+*.jpg  binary
+*.gif  binary
+*.pdf  binary
+*.docx binary
+*.xlsx binary

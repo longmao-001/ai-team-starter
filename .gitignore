@@ -1,0 +1,31 @@
+# 真实实体名单：只留在本地，绝不入库（见 90-tooling/README.md）
+denylist.local.txt
+90-tooling/rules/denylist.local.txt
+
+# 扫描/脚手架临时输出
+*.out
+scan-report*.md
+scan-report*.json
+
+# 个人团队配置（含真实姓名/组织时用这两个名字；examples/ 下的示例文件要入库）
+team.config.json
+team.config.local.json
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# 运行时产物：不要入库（详见 90-tooling/release.md 第 2 节）
+runs/
+tmp/
+*.log
+*.bak

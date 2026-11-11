@@ -88,6 +88,15 @@ python 90-tooling/sanitize_scan.py --root . --block-mb 5
 
 ## 4. 推送纪律
 
+### 改写历史（force-push）的三条硬规矩
+
+发布过之后再 force-push，问题不在正文里，**正文扫描永远扫不出来**：
+
+1. **必须记账一行**：谁、为什么、旧 sha → 新 sha、影响面。记在 [`rules/history-rewrites.md`](rules/history-rewrites.md)，只留在聊天记录里等于没有。
+2. **必须验两个关系**：旧 tag 是否仍是 HEAD 的祖先（`git merge-base --is-ancestor`）；有没有只被 tag 可达、main 里没有的提交（那会造出"tag 拉得到、main 里没有"的悬空版本）。
+3. **必须知道它删不掉内容**：实测——force-push 之后按旧 sha 仍能从 GitHub API 取到那个提交（返回 200），因为改写只移动引用、不删对象。**所以真实敏感信息不能靠 force-push 处置**，要走仓库删除重建或平台流程；force-push 只能用于"我们自己刚写进去、且不敏感"的内容。
+
+
 ```bash
 export GIT_TERMINAL_PROMPT=0     # 凭据过期时快速失败，不挂住
 git push origin main

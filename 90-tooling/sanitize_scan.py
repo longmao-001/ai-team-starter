@@ -103,6 +103,7 @@ def load_denylist(path: Path) -> list[tuple[str, str]]:
     if not path.exists():
         return []
     terms: list[tuple[str, str]] = []
+    short: list[str] = []
     with path.open("r", encoding="utf-8-sig") as fh:
         for raw in fh:
             line = raw.strip()
@@ -113,7 +114,19 @@ def load_denylist(path: Path) -> list[tuple[str, str]]:
                 terms.append((cat.strip(), term.strip()))
             else:
                 terms.append(("entity", line))
-    return [(c, t) for c, t in terms if t]
+    # 单字词条不可用：中文单字会命中大量普通词（折/衡/利…），误报会淹没真命中。
+    kept: list[tuple[str, str]] = []
+    for cat, term in terms:
+        if not term:
+            continue
+        if len(term) < 2:
+            short.append(term)
+            continue
+        kept.append((cat, term))
+    if short:
+        print(f"[WARN] 名单中有 {len(short)} 条 <2 字词条已忽略（单字误报不可用）：{', '.join(short)}",
+              file=sys.stderr)
+    return kept
 
 
 def iter_files(root: Path):

@@ -6,10 +6,10 @@ Day 1 结束时你有一个能答事的 bot，但还不能**交付**。这一周
 ## 步骤 4 第一张派工单（40 min）
 
 - [ ] 六件齐：任务 ID / objective / output / tool guidance / boundaries / acceptance
-- [ ] 补两件：`due` 与 `blocked_by`（没有依赖写 `none`）
-- [ ] 验收串至少一条**能复制执行**（给命令与期望值，不给形容词）
+- [ ] 补 `due` 与 `blocked_by`（无依赖写 `none`）
+- [ ] 验收串至少一条**能复制执行**：给命令与期望值
 
-不满足就别往下走：验收里出现「确认无误」「质量高」「内容完整」。
+验收里出现「确认无误」「质量高」「内容完整」就别过。
 卡住时：先问「拿这张单换个人来做，他能不能判自己做完？」不能，就是缺验收。
 字段原文见 [`03-team-operations/02-dispatch-and-acceptance.md`](../03-team-operations/02-dispatch-and-acceptance.md)。
 

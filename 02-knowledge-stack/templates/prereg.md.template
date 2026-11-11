@@ -1,0 +1,55 @@
+# 发布预注册（填空即用）
+
+> 规则：**先写预期，再跑构建。** 跑完再回填预期 = 没有预注册。
+> 任何一项写"大概/约/视情况"都算没写。
+
+```
+round_id:        {{ROUND_ID}}
+时间:            {{YYYY-MM-DD HH:MM}}
+操作人:           {{WHO}}
+
+输入（钉死，不写"默认"）:
+  seed/nodes.csv  sha256 {{SEED_NODES_SHA}}
+  seed/edges.csv  sha256 {{SEED_EDGES_SHA}}
+  schema.json     sha256 {{SCHEMA_SHA}}
+prev_snapshot:   {{PREV_SHA}}      # 上一版 kg.json 的完整 sha256
+out_dir:         output/snapshots/{{ROUND_ID}}/
+
+预期五项计数（具体数字）:
+  nodes:      {{N}}      # = 上一版 {{N_PREV}} + 新增 {{ADD}} - 删除 {{REM}}
+  edges:      {{M}}      # = 上一版 {{M_PREV}} + 新增 {{ADD_E}} - 删除 {{REM_E}}
+  by_type:    {{TYPE1:N1, TYPE2:N2, ...}}
+  orphans:    {{ORPHANS}}   # 预期 <= {{ORPHANS_PREV}}；新增实体不得成为孤立
+  dangling:   0             # 非 0 即中止
+
+允许改动（白名单，逐字段）:
+  - {{ALLOW_1}}   # 例：只允许新增节点/边
+  - {{ALLOW_2}}   # 例：只允许修改 Book.year
+禁止改动（越界即回滚）:
+  - {{FORBID_1}}  # 例：已发布实体的 id
+  - {{FORBID_2}}  # 例：已有边的 relation
+
+确定性:
+  重跑次数 {{K}}，seed {{SEED_LIST}}；要求 sha 全部相等（Δ=0）
+
+口径（每个指标写明怎么算）:
+  {{METRIC_1}}: {{DEF_1}}    # 例：节点数=图内 entities 总数，不含 xref 节点
+  {{METRIC_2}}: {{DEF_2}}
+
+干跑命令:
+  python -X utf8 tools/kb_build.py --root . --dry
+  python -X utf8 tools/kb_audit.py --root . --expect-nodes {{N}} --expect-edges {{M}}
+
+回滚方案（≤3 步，命令必须写全）:
+  1. cp output/snapshots/{{ROUND_ID}}/kg.json.prev output/kg.json
+     cp output/snapshots/{{ROUND_ID}}/kg.json.prev.sha256 output/kg.json.sha256
+  2. 核对：sha256(output/kg.json) == {{PREV_SHA}}
+  3. python -X utf8 tools/kb_load.py --root .   # 必须重建索引
+     复测：{{QUERY_1}} / {{QUERY_2}} / {{QUERY_3}}
+
+失败判定（出现任一条即回滚）:
+  - 五项计数与预期不符且无法用白名单解释
+  - 字节比对显示白名单外变更
+  - 抽样节点缺失
+  - 双向检索回归失败（旧 id 搜不到 / 已删名字还能搜到）
+```

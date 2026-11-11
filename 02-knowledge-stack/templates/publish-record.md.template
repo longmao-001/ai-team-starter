@@ -1,0 +1,42 @@
+# 发布记录（填空即用）
+
+> 发布完成立刻写。事后回忆的记录，等于没有记录。
+
+```
+round_id:      {{ROUND_ID}}
+发布时间:       {{YYYY-MM-DD HH:MM}}
+操作人:         {{WHO}}
+
+prev_snapshot: {{PREV_SHA}}
+new_snapshot:  {{NEW_SHA}}
+out_dir:       output/snapshots/{{ROUND_ID}}/
+audit:         output/audit.json   （verdict: {{PASS/FAIL}}）
+
+五项计数（预期 -> 实际 -> 差）:
+  nodes     {{N_EXP}} -> {{N_ACT}} -> {{D_N}}
+  edges     {{M_EXP}} -> {{M_ACT}} -> {{D_M}}
+  by_type   {{EXP_MAP}} -> {{ACT_MAP}}
+  orphans   {{O_EXP}} -> {{O_ACT}}
+  dangling  {{DG_EXP}} -> {{DG_ACT}}
+
+规范化 sha 比对:
+  节点集合 sha  {{SHA_NODES}}  相等: {{YES/NO}}
+  边集合   sha  {{SHA_EDGES}}  相等: {{YES/NO}}
+
+白名单外变更: {{NONE / 逐条列出}}
+抽样节点（跨类型各 1）: {{ID1}} / {{ID2}} / {{ID3}}
+双向检索回归:
+  被隔离名字 {{NAME}} 搜不到: {{YES/NO}}
+  旧 id {{ID}} 仍命中:        {{YES/NO}}
+
+回滚路径: output/snapshots/{{ROUND_ID}}/
+回滚是否已验证: {{已演练（时间）/ 未演练}}
+
+失败段: {{NONE / 失败产物路径 + 输入指纹 + 与预期的差值}}
+
+实质改了什么（直白写，不要写"优化了一下"）:
+  {{一句话：改了哪些字段、多少条、影响什么检索能力}}
+
+已知遗留:
+  - {{TODO_1}}
+```

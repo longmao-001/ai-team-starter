@@ -2,6 +2,16 @@
 
 格式：`## [版本] - YYYY-MM-DD`，逐条写"改了什么 + 为什么"。只增不改，已发布版本的内容不回头修。
 
+## [0.2.0] - 2026-11-11
+
+并入知识栈一章（知识库 + 知识图谱 + RAG 的最小可用路径），21 件 95,788 B（git blob 口径，LF 归一）。
+
+- `02-knowledge-stack/`：最小路径、schema 模板、发布纪律、查询契约、坑注册表（15 条）、检查表、索引
+- `sample/`：可跑的七步示例（seed → schema → build → load → query → 记账 → RAG 装配）+ 5 个脚本 + 2 个 seed
+- `templates/`：预注册、发布记录、查询记账三份填空模板
+- `sample/output/` 与 `query_log.jsonl` 按 `sample/.gitignore` 排除，运行产物不入库
+- 并入前独立验过：在干净目录、默认 cp936 控制台、不设任何编码变量下 `python run_demo.py` → exit 0，PASS 13/13
+
 ## [0.1.2] - 2026-11-11
 
 - 修 `sanitize_scan.py`：实体名单 <2 字词条一律忽略并警告。实测单字词条（"折"）在 50 个文件里立刻产生 2 处误报，真命中会被淹没

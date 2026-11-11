@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "graph": "demo-books",
+  "id_pattern": "^(Book|Author|Genre|Topic):[a-z0-9-]+$",
+  "entity_types": {
+    "Book":   {"required": ["id", "type", "name", "source", "source_date"], "optional": ["year", "aliases"]},
+    "Author": {"required": ["id", "type", "name", "source", "source_date"], "optional": ["aliases"]},
+    "Genre":  {"required": ["id", "type", "name", "source", "source_date"], "optional": ["aliases"]},
+    "Topic":  {"required": ["id", "type", "name", "source", "source_date"], "optional": ["aliases"]}
+  },
+  "relation_types": {
+    "WRITTEN_BY":    {"from": ["Book"], "to": ["Author"]},
+    "GENRE_OF":      {"from": ["Book"], "to": ["Genre"]},
+    "ABOUT":         {"from": ["Book"], "to": ["Topic"]},
+    "NARROWER_THAN": {"from": ["Topic"], "to": ["Topic"]}
+  },
+  "confidence": ["SEED", "DB_REFERENCE", "LLM_INFERRED"],
+  "date_format": "YYYY-MM-DD",
+  "date_unknown_placeholder": "unknown",
+  "notes": [
+    "id_pattern 是硬门：不符合的实体在构建期直接报错，不进图。",
+    "source + source_date 是必填：没有出处的边不许入图（见 05-pitfalls.md 第 9 条）。",
+    "关系只存单向（Book->Author），不要同时存 Author->Book；反查由索引负责。"
+  ]
+}

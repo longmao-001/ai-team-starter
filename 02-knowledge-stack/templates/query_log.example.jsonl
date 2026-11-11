@@ -1,0 +1,4 @@
+{"ts":"2026-01-01T00:00:01Z","query":"山谷","mode":"text","engine":"like","graph":"demo-books","snapshot_sha":"050d0a72d851e4ba6178ec53b823e96762fbd7ffeb812b472e7195af043ab2a9","hits":1}
+{"ts":"2026-01-01T00:00:02Z","query":"量子引力","mode":"text","engine":"like","graph":"demo-books","snapshot_sha":"050d0a72d851e4ba6178ec53b823e96762fbd7ffeb812b472e7195af043ab2a9","hits":0}
+{"ts":"2026-01-01T00:00:03Z","query":"Book:b-01","mode":"id","engine":"graph","graph":"demo-books","snapshot_sha":"050d0a72d851e4ba6178ec53b823e96762fbd7ffeb812b472e7195af043ab2a9","hits":1}
+{"ts":"2026-01-01T00:00:04Z","query":"Book:b-01","mode":"rag","engine":"graph","graph":"demo-books","snapshot_sha":"050d0a72d851e4ba6178ec53b823e96762fbd7ffeb812b472e7195af043ab2a9","hits":5}

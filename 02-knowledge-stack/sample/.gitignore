@@ -1,0 +1,5 @@
+output/
+output2/
+query_log.jsonl
+__pycache__/
+*.tmp

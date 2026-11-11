@@ -8,6 +8,17 @@
 | [`rules/denylist.example.txt`](rules/denylist.example.txt) | 本地实体名单的**格式示例** | 复制成 `rules/denylist.local.txt`（不入库） |
 | [`examples/team.config.example.json`](examples/team.config.example.json) | 脚手架配置示例 | 复制成 `team.config.json` 改 |
 
+## 核文件不要用 `Get-Content`（Windows PowerShell 5.1）
+
+这个坑两条都要记，都是实测：
+
+| 动作 | 用 `Get-Content` 会怎样 | 改用什么 |
+|---|---|---|
+| 读 UTF-8 无 BOM 的中文文件 | 默认按 ANSI 解码 → 满屏乱码，看着像文件坏了 | `Get-Content -Encoding utf8`，或直接用编辑器的 read |
+| 数行数 | 对某些 UTF-8 文件会数错（实测 37 vs 实际 97，同一文件） | `[IO.File]::ReadAllLines($p).Count` |
+
+报行数、报字节、报哈希，都要说清口径：**什么工具、什么编码、算不算末尾空行**。不然两份"都对"的数字会打起来。
+
 ## 为什么扫描器分两层
 
 公开仓库要防两类东西，性质不同：

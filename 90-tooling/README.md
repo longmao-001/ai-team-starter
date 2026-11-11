@@ -8,6 +8,17 @@
 | [`rules/denylist.example.txt`](rules/denylist.example.txt) | 本地实体名单的**格式示例** | 复制成 `rules/denylist.local.txt`（不入库） |
 | [`examples/team.config.example.json`](examples/team.config.example.json) | 脚手架配置示例 | 复制成 `team.config.json` 改 |
 
+## 扫描对象：发布树，不是工作区
+
+这一条是实际踩出来的，两边都会错：
+
+| 你扫的是 | 会怎样 |
+|---|---|
+| **工作区** | ①把只该留在本地的敏感文件误报成泄露（本地的实体名单就是典型，它被 `.gitignore` 排除、根本不会入库）；②漏掉"已删除但仍在历史里"的内容，因为工作区里已经没有它了 |
+| **发布树** | `git archive HEAD` 出来的那棵，就是别人 clone 到的东西——这棵树干净才是真的干净 |
+
+所以发布门的顺序是：**先 `git archive HEAD` 出发布树，对它扫结构层 + 实体层；再单独扫历史层**。三层都报数，缺一层就不算门。
+
 ## 核文件不要用 `Get-Content`（Windows PowerShell 5.1）
 
 这个坑两条都要记，都是实测：

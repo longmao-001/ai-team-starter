@@ -50,7 +50,7 @@ DEFAULT_WAIVERS = "90-tooling/rules/history-waivers.txt"
 
 
 def load_waivers(path: Path) -> list[dict]:
-    """已定性豁免：提交短sha|文件|规则|理由。# 开头为注释。"""
+    """已定性豁免：`提交:文件:行|规则|理由`（只定位，不复述原文）。# 开头为注释。"""
     if not path.exists():
         return []
     out = []
@@ -59,10 +59,33 @@ def load_waivers(path: Path) -> list[dict]:
         if not line or line.startswith("#"):
             continue
         parts = [p.strip() for p in line.split("|")]
-        if len(parts) < 4:
+        if len(parts) < 3:
             continue
-        out.append({"commit": parts[0], "file": parts[1], "rule": parts[2], "reason": parts[3]})
+        head = parts[0]
+        commit, sep, rest = head.partition(":")
+        lineno = None
+        if sep:
+            file_part, sep2, maybe_line = rest.rpartition(":")
+            if sep2 and maybe_line.isdigit():
+                rest, lineno = file_part, int(maybe_line)
+        out.append({"commit": commit, "file": rest, "line": lineno,
+                    "rule": parts[1], "reason": "|".join(parts[2:])})
     return out
+
+
+def waiver_hit(waivers: list[dict], h: dict) -> dict | None:
+    for w in waivers:
+        # 提交用短 sha 前缀比对：手写豁免时通常会写 7 位，扫描出来的是 8 位
+        if w["commit"] and not (h["commit"].startswith(w["commit"]) or w["commit"].startswith(h["commit"])):
+            continue
+        if w["file"] and w["file"] != h["file"]:
+            continue
+        if w["rule"] and w["rule"] != h["rule"]:
+            continue
+        if w["line"] and w["line"] != h["line"]:
+            continue
+        return w
+    return None
 
 
 def git(*args: str) -> str:
@@ -157,9 +180,7 @@ def main() -> int:
                                       "line": lineno, "rule": f"denylist_{cat}", "sev": "BLOCK",
                                       "match": term, "note": f"实体名单命中（类别 {cat}）"})
                 for h in local:
-                    waiver = next((w for w in waivers
-                                   if w["commit"] == h["commit"] and w["file"] == h["file"]
-                                   and w["rule"] == h["rule"]), None)
+                    waiver = waiver_hit(waivers, h)
                     if waiver:
                         h["reason"] = waiver["reason"]
                         waived.append(h)
@@ -175,6 +196,7 @@ def main() -> int:
         for h in items:
             key = (h["file"], h["rule"])
             slot = agg.setdefault(key, {"file": h["file"], "rule": h["rule"], "note": h["note"],
+                                        "reason": h.get("reason", ""),
                                         "commits": [], "line": h["line"], "match": h["match"]})
             if h["commit"] not in slot["commits"]:
                 slot["commits"].append(h["commit"])
@@ -190,7 +212,7 @@ def main() -> int:
         print()
 
     print(f"扫描 blob 数     : {blobs_scanned}")
-    print(f"已定性豁免       : {len(waived)} 处（来自 {waiver_path.name}，不计入通过但全部列出）")
+    print(f"OVERRIDE（已定性）: {len(waived)} 处（来自 {waiver_path.name}，不计入通过但全部列出）")
     print()
     dump(f"[BLOCK] {len(blocks)} 处（按文件+规则聚合）", blocks)
     dump(f"[WARN] {len(warns)} 处", warns)

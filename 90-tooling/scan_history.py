@@ -24,9 +24,11 @@
 - **泄露**（真实人名 / 机构 / 可用路径 / 凭据）→ 立刻处理：改 private、清历史、再评估公开
 - **无害形态**（示意用省略号、规则文档里的示例写法）→ 记录结论即可，不改写历史
 
-定性结论要写进 CHANGELOG，不写就等于没人定过性。
+定性结论要写进 CHANGELOG，不写就等于没人定过性。已定性的命中登记在
+`90-tooling/rules/history-waivers.txt`（格式 `提交短sha|文件|规则|理由`），
+被豁免的命中会单独列出、**不算通过但可审计**，不会静默消失。
 
-退出码：0 = 历史无 BLOCK；1 = 有 BLOCK（须逐条定性）；2 = 不是 git 仓库。
+退出码：0 = 历史无未豁免 BLOCK；1 = 有未豁免 BLOCK；2 = 不是 git 仓库。
 """
 
 from __future__ import annotations
@@ -40,7 +42,27 @@ from pathlib import Path
 
 # 与 sanitize_scan.py 共用规则表：同一条规则只存一处正文
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from sanitize_scan import STRUCTURAL_RULES, BENIGN_DOMAINS, is_text, load_denylist, mask  # noqa: E402
+from sanitize_scan import (  # noqa: E402
+    ALLOW_TOKEN, BENIGN_DOMAINS, STRUCTURAL_RULES, is_text, load_denylist, mask,
+)
+
+DEFAULT_WAIVERS = "90-tooling/rules/history-waivers.txt"
+
+
+def load_waivers(path: Path) -> list[dict]:
+    """已定性豁免：提交短sha|文件|规则|理由。# 开头为注释。"""
+    if not path.exists():
+        return []
+    out = []
+    for raw in path.read_text(encoding="utf-8-sig").split("\n"):
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = [p.strip() for p in line.split("|")]
+        if len(parts) < 4:
+            continue
+        out.append({"commit": parts[0], "file": parts[1], "rule": parts[2], "reason": parts[3]})
+    return out
 
 
 def git(*args: str) -> str:
@@ -70,6 +92,7 @@ def main() -> int:
     ap.add_argument("--denylist", help="本地实体名单（默认 <root>/90-tooling/rules/denylist.local.txt）")
     ap.add_argument("--max-commits", type=int, default=0, help="只扫最近 N 个提交，0 = 全部")
     ap.add_argument("--samples", type=int, default=3, help="每类规则最多列几条")
+    ap.add_argument("--waivers", help=f"已定性豁免清单，默认 <root>/{DEFAULT_WAIVERS}")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
 
@@ -90,7 +113,10 @@ def main() -> int:
     print()
 
     hits: list[dict] = []
+    waived: list[dict] = []
     blobs_scanned = 0
+    waiver_path = Path(args.waivers) if args.waivers else (root / DEFAULT_WAIVERS)
+    waivers = load_waivers(waiver_path)
     for sha, short, subj in revs:
         try:
             tree = git("ls-tree", "-r", sha)
@@ -114,18 +140,31 @@ def main() -> int:
             blobs_scanned += 1
             text = raw.decode("utf-8-sig", errors="replace")
             for lineno, content in enumerate(text.split("\n"), start=1):
+                line_allowed = ALLOW_TOKEN in content
+                local: list[dict] = []
                 for rid, sev, rx, note in compiled:
                     for m in rx.finditer(content):
                         if rid == "email" and any(d in m.group(0).lower() for d in BENIGN_DOMAINS):
                             continue
-                        hits.append({"commit": short, "subject": subj, "file": path,
-                                     "line": lineno, "rule": rid, "sev": sev,
-                                     "match": m.group(0), "note": note})
+                        if line_allowed and sev == "BLOCK":
+                            continue
+                        local.append({"commit": short, "subject": subj, "file": path,
+                                      "line": lineno, "rule": rid, "sev": sev,
+                                      "match": m.group(0), "note": note})
                 for cat, term in terms:
                     if term and term.lower() in content.lower():
-                        hits.append({"commit": short, "subject": subj, "file": path,
-                                     "line": lineno, "rule": f"denylist_{cat}", "sev": "BLOCK",
-                                     "match": term, "note": f"实体名单命中（类别 {cat}）"})
+                        local.append({"commit": short, "subject": subj, "file": path,
+                                      "line": lineno, "rule": f"denylist_{cat}", "sev": "BLOCK",
+                                      "match": term, "note": f"实体名单命中（类别 {cat}）"})
+                for h in local:
+                    waiver = next((w for w in waivers
+                                   if w["commit"] == h["commit"] and w["file"] == h["file"]
+                                   and w["rule"] == h["rule"]), None)
+                    if waiver:
+                        h["reason"] = waiver["reason"]
+                        waived.append(h)
+                    else:
+                        hits.append(h)
 
     blocks = [h for h in hits if h["sev"] == "BLOCK"]
     warns = [h for h in hits if h["sev"] == "WARN"]
@@ -151,8 +190,17 @@ def main() -> int:
         print()
 
     print(f"扫描 blob 数     : {blobs_scanned}")
+    print(f"已定性豁免       : {len(waived)} 处（来自 {waiver_path.name}，不计入通过但全部列出）")
+    print()
     dump(f"[BLOCK] {len(blocks)} 处（按文件+规则聚合）", blocks)
     dump(f"[WARN] {len(warns)} 处", warns)
+
+    if waived:
+        print("[WAIVED] 已定性，不改写历史")
+        for g in group(waived)[: args.samples * 6]:
+            print(f"  {g['rule']:22s} {g['file']}:{g['line']}  <<{mask(g['match'])}>>"
+                  f"  {g['commits'][0]}  理由：{g.get('reason', '')}")
+        print()
 
     ok = not blocks
     print(f"结论：BLOCK {len(blocks)} / WARN {len(warns)} → "

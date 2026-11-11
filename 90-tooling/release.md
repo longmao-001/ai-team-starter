@@ -26,7 +26,8 @@ python 90-tooling/scan_history.py --denylist 90-tooling/rules/denylist.local.txt
 ```
 
 - 有 BLOCK 不等于必改写历史：**每条命中必须定性**——泄露（真实人名/机构/可用路径/凭据）清历史；无害形态（示意用省略号、规则文档里的示例写法）记录结论即可。
-- 定性结论写进 CHANGELOG，不写就等于没人定过性。
+- 定性结论写进 CHANGELOG；已定性的登记到 `90-tooling/rules/history-waivers.txt`（提交短sha|文件|规则|理由），扫描时单独列出、**不算通过但可审计**，不会静默消失。
+- 判据：真实人名 / 机构名 / 可用路径 / 凭据 → 一律清历史，**不许豁免**；示意用省略号、规则文档里的示例写法、无个人信息的路径形态 → 可豁免。
 
 ### 门 1：脱敏扫描 PASS
 

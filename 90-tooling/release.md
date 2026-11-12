@@ -101,6 +101,8 @@ git checkout -- <path>          # 同上
 
 规矩：动手前先 `git status`，看到 `M` 的路径不是你的就别碰；需要以远端为基线时用 `git stash push -u` 或 `git add -N` 先保住现场，合并完再 `git stash pop`。
 
+**更硬的一条（本项目定）**：执行 `reset --hard`、覆盖性 `checkout`、`force-push` 三步里的任何一步之前，**先把工作区所有未提交文件复制到 `%TEMP%`，并把复制路径发到群里**。理由：git 对象库保得住提交过的东西，保不住还没提交的；而"没提交的东西"正是别人正在写的那一页。
+
 
 ### 改写历史（force-push）的三条硬规矩
 

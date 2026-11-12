@@ -30,6 +30,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -133,7 +134,32 @@ def load_denylist(path: Path) -> list[tuple[str, str]]:
     return kept
 
 
-def iter_files(root: Path):
+def git_tracked(root: Path) -> list[str] | None:
+    """git ls-files 列出的文件（相对 root）。不是 git 仓库返回 None。
+
+    为什么要有这个：工作区里躺着只该留在本地的敏感文件（本地名单、运行产物、
+    扫描报告），它们被 .gitignore 排除、永不公开；扫工作区会把它们误报成"泄露"，
+    而误报多了，真命中就会被忽略。默认只扫会被提交的东西。
+    """
+    try:
+        out = subprocess.run(["git", "-C", str(root), "ls-files", "-z"], capture_output=True)
+    except FileNotFoundError:
+        return None
+    if out.returncode != 0:
+        return None
+    return [p for p in out.stdout.decode("utf-8", "replace").split("\0") if p]
+
+
+def iter_files(root: Path, tracked: list[str] | None = None):
+    if tracked is not None:
+        for rel in tracked:
+            path = root / rel
+            if not path.is_file():
+                continue
+            if any(part in EXCLUDE_DIRS for part in path.parts):
+                continue
+            yield path
+        return
     for path in sorted(root.rglob("*")):
         if not path.is_file():
             continue
@@ -155,6 +181,12 @@ def scan(args) -> int:
         return 2
 
     compiled = [(rid, sev, re.compile(rx), note) for rid, sev, rx, note in STRUCTURAL_RULES]
+    tracked = None if args.all_files else git_tracked(root)
+    if tracked is None and args.tracked_only:
+        print(f"[ERR] --tracked-only 要求 --root 是 git 仓库：{root}", file=sys.stderr)
+        return 2
+    mode = (f"tracked-only（git ls-files {len(tracked)} 条，只扫会被提交的文件）"
+            if tracked is not None else "目录全量（非 git 目录，或显式 --all-files）")
     hits: list[dict] = []          # 所有命中
     allowed: list[dict] = []       # 被 sanitize:allow 放行的命中（仍计数，供审计）
     files_scanned = 0
@@ -164,7 +196,7 @@ def scan(args) -> int:
     bom_files: list[str] = []
     large: list[tuple[str, int]] = []
 
-    for path in iter_files(root):
+    for path in iter_files(root, tracked):
         rel = path.relative_to(root).as_posix()
         size = path.stat().st_size
         if size > args.block_mb * 1024 * 1024:
@@ -217,6 +249,7 @@ def scan(args) -> int:
     if files_scanned == 0:
         print("脱敏扫描报告（sanitize_scan.py）")
         print(f"root            : {root}")
+        print(f"扫描对象         : {mode}")
         print(f"扫描覆盖         : 0 个文件 / 0 字节")
         print(f"非文本跳过       : {files_skipped} 个")
         print()
@@ -230,6 +263,7 @@ def scan(args) -> int:
 
     print("脱敏扫描报告（sanitize_scan.py）")
     print(f"root            : {root}")
+    print(f"扫描对象         : {mode}")
     print(f"扫描覆盖         : {files_scanned} 个文本文件 / {text_bytes:,} 字节")
     print(f"非文本跳过       : {files_skipped} 个")
     print(f"结构规则         : {len(STRUCTURAL_RULES)} 条")
@@ -316,6 +350,10 @@ def render_report(root, files, text_bytes, terms, allowed, blocks, warns, crlf, 
 def main() -> int:
     ap = argparse.ArgumentParser(description="公开仓库脱敏扫描（结构层 + 本地实体名单层）")
     ap.add_argument("--root", default=".", help="扫描根目录，默认当前目录")
+    ap.add_argument("--tracked-only", action="store_true",
+                    help="只扫 git ls-files 列出的文件（在 git 仓库里这是默认行为）")
+    ap.add_argument("--all-files", action="store_true",
+                    help="无视 .gitignore，扫目录下全部文件（只用于排查误报）")
     ap.add_argument("--report", help="把汇总写成 Markdown（不含原文，可公开）")
     ap.add_argument("--denylist", help=f"本地实体名单路径，默认 <root>/{DEFAULT_DENYLIST.as_posix()}")
     ap.add_argument("--require-denylist", action="store_true", help="名单缺失即报错（发布门用）")

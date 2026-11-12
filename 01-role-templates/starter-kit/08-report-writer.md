@@ -38,12 +38,12 @@
 
 | 主题 | 指针 |
 |---|---|
-| 报数与哈希 | `../../03-team-operations/01-discipline.md` 的「一、报数：四件齐全才算数」 |
-| 交付回执 | `../../03-team-operations/01-discipline.md` 的「三、交付回执：格式固定」 |
-| 写域与批准门 | `../../03-team-operations/01-discipline.md` 的「四、写域与批准门」 |
-| 不编造 | `../../03-team-operations/01-discipline.md` 的「七、不编造」 |
-| 数字现取现算 | `../../03-team-operations/01-discipline.md` 的「九、数字与状态：现取现算」 |
-| 写作体例 | [`../../WRITING_STYLE.md`](../../WRITING_STYLE.md) 的「体例」 |
+| 报数与哈希 | `03-team-operations/01-discipline.md` 的「报数：四件齐全才算数」 |
+| 交付回执 | `03-team-operations/01-discipline.md` 的「交付回执：格式固定」 |
+| 写域与批准门 | `03-team-operations/01-discipline.md` 的「写域与批准门」 |
+| 不编造 | `03-team-operations/01-discipline.md` 的「不编造」 |
+| 数字现取现算 | `03-team-operations/01-discipline.md` 的「数字与状态：现取现算」 |
+| 写作体例 | `WRITING_STYLE.md` 的「体例」 |
 
 ## 6. 三条「常见写歪」
 

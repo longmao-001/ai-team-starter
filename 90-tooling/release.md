@@ -88,6 +88,20 @@ python 90-tooling/sanitize_scan.py --root . --block-mb 5
 
 ## 4. 推送纪律
 
+### 与他人在途编辑共存时：禁用 `reset --hard` / `checkout --`
+
+多人往同一个仓库写的时候，工作区里躺着的**未提交内容不属于你**，但它一样会被下面两条命令抹掉：
+
+```bash
+git reset --hard <ref>          # 未 add 的修改直接消失
+git checkout -- <path>          # 同上
+```
+
+实测后果：作者改好一页、还没 `git add`，一条 `reset --hard` 之后**既不在历史里，也不在 reflog、也不在 `git fsck` 的悬空对象里**——未 add 的内容从不进对象库，找不回来。
+
+规矩：动手前先 `git status`，看到 `M` 的路径不是你的就别碰；需要以远端为基线时用 `git stash push -u` 或 `git add -N` 先保住现场，合并完再 `git stash pop`。
+
+
 ### 改写历史（force-push）的三条硬规矩
 
 发布过之后再 force-push，问题不在正文里，**正文扫描永远扫不出来**：

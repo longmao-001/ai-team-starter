@@ -51,15 +51,15 @@
 
 | 主题 | 指针 |
 |---|---|
-| 报数四件套、哈希与行数口径 | `03-team-operations/01-discipline.md` §一 |
-| 负结论必须回显依据（含 0 命中的检索式） | 同上 §二 |
-| 交付回执格式（status / 结论 / 产物 / 验收） | 同上 §三 |
-| 写域与批准门（移动、删除、改名） | 同上 §四 |
-| 三件套：备份 / 干跑 / 回滚 | 同上 §五、`03-team-operations/05-backup-rollback.md` §三件套 |
-| 不编造：查不到写「未见」并写明范围 | 同上 §七 |
-| 状态断言带快照与时点 | 同上 §八 |
-| 台账字段纪律、当日回写、单一写者 | `03-team-operations/04-ledgers.md` §QUEUE 的字段纪律、§三条通用纪律 |
-| 交付账与产物现值（档案登记两本账） | 同上 §2 MANIFEST、§3 PROVENANCE |
+| 报数四件套、哈希与行数口径 | `03-team-operations/01-discipline.md` 的「报数：四件齐全才算数」 |
+| 负结论必须回显依据（含 0 命中的检索式） | `03-team-operations/01-discipline.md` 的「负结论必须能看见依据」 |
+| 交付回执格式（status / 结论 / 产物 / 验收） | `03-team-operations/01-discipline.md` 的「交付回执：格式固定」 |
+| 写域与批准门（移动、删除、改名） | `03-team-operations/01-discipline.md` 的「写域与批准门」 |
+| 三件套：备份 / 干跑 / 回滚 | `03-team-operations/01-discipline.md` 的「三件套：任何写操作之前」、`03-team-operations/05-backup-rollback.md` 的「三件套」 |
+| 不编造：查不到写「未见」并写明范围 | `03-team-operations/01-discipline.md` 的「不编造」 |
+| 状态断言带快照与时点 | `03-team-operations/01-discipline.md` 的「状态断言带快照」 |
+| 台账字段纪律、当日回写、单一写者 | `03-team-operations/04-ledgers.md` 的「QUEUE 的字段纪律」、「三条通用纪律」 |
+| 交付账与产物现值（档案登记两本账） | `03-team-operations/04-ledgers.md` 的「MANIFEST.md —— 交付账（追加式）」、「PROVENANCE.md —— 产物现值」 |
 
 ## 6. 三条「常见写歪」
 

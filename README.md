@@ -67,7 +67,7 @@ python 90-tooling/sanitize_scan.py --root ../my-team
 
 ## 六、图示
 
-先看要建哪一类（图 1），再看这一类由哪些件组成（图 4–6），最后看知识图谱从零到能查（图 2–3）。图在 [`docs/figures/`](docs/figures/)。
+先看要建哪一类（图 1），再看这一类由哪些件组成（图 2–4），最后看知识图谱从零到能查（图 5–6）。图在 [`docs/figures/`](docs/figures/)。
 
 **三类角色怎么选**（对应第一章）
 

@@ -65,6 +65,28 @@ python 90-tooling/sanitize_scan.py --root ../my-team
 2. **纪律写成口号**：写"要注意质量"等于没写。要写"门控只跑现成脚本，跳过不等于通过"这种能判生死的句子。
 3. **示例写成炫耀**：示例要写"我们第一次是怎么写错的，改成什么样"，不是"我们做得多好"。
 
+## 六、图示
+
+先看要建哪一类（图 1），再看这一类由哪些件组成（图 4–6），最后看知识图谱从零到能查（图 2–3）。图在 [`docs/figures/`](docs/figures/)。
+
+**三类角色怎么选**（对应第一章）
+
+![三类角色选择表：功能 agent / 专家 bot / 管理 bot 的维度对比](docs/figures/role-types-matrix.png)
+
+**三类 agent 各由什么组成**（对应 [`01-role-templates/`](01-role-templates/README.md)）
+
+![功能 agent：固定输入、固定输出、可验收](docs/figures/agent-01-functional.png)
+
+![专家 bot：会拒答、会挑错、会把问题重述一遍](docs/figures/agent-02-expert.png)
+
+![管理 bot：对执行负责，不对专业判断负责](docs/figures/agent-03-manager.png)
+
+**知识图谱从零到能查**（对应 [`02-knowledge-stack/`](02-knowledge-stack/README.md)）
+
+![知识图谱八步路径：每一步一个通过判据](docs/figures/kg-minimal-path.png)
+
+![知识图谱从零到一张能查的图：输入 → 命令 → 产物](docs/figures/kg-from-zero.png)
+
 ---
 
 ## 版本与许可
